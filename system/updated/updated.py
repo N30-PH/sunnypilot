@@ -399,10 +399,21 @@ class Updater:
     cloudlog.info("finalize success!")
 
 
+def refresh_disabled_update_metadata(params: Params) -> None:
+  # These display fields are cleared on manager start. Keep them accurate even
+  # when updates are disabled, without initializing the updater or fetching code.
+  metadata = get_build_metadata()
+  description = f"{metadata.openpilot.version} / {metadata.channel} / {metadata.openpilot.git_commit[:7]}"
+  params.put("UpdaterCurrentDescription", description, block=True)
+  if not params.get("UpdaterTargetBranch"):
+    params.put("UpdaterTargetBranch", metadata.channel, block=True)
+
+
 def main() -> None:
   params = Params()
 
   if params.get_bool("DisableUpdates"):
+    refresh_disabled_update_metadata(params)
     cloudlog.warning("updates are disabled by the DisableUpdates param")
     exit(0)
 
